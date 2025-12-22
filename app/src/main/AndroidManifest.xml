@@ -81,6 +81,8 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".LibraryActivity" />
         </activity>
+        <activity android:name=".AccountChooserActivity" />
+
 
     </application>
 

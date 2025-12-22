@@ -6,31 +6,27 @@
     android:layout_height="match_parent"
     android:background="#F5F5F5">
 
-    <LinearLayout
+    <!-- Toolbar cố định -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="#1976D2"
+        android:elevation="6dp"
+        android:title="Thư viện"
+        android:titleTextColor="@android:color/white"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+
+    <!-- RecyclerView scrollable bên dưới -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewLibraries"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_marginTop="?attr/actionBarSize"
+        android:clipToPadding="false"
+        android:padding="8dp"/>
 
-        <!-- Toolbar -->
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="#1976D2"
-            android:elevation="4dp"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
-
-        <!-- RecyclerView for libraries -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewLibraries"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="8dp"
-            android:clipToPadding="false" />
-
-    </LinearLayout>
-
+    <!-- FAB thêm thư viện -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddLibrary"
         android:layout_width="wrap_content"
@@ -39,7 +35,8 @@
         android:layout_margin="16dp"
         android:src="@android:drawable/ic_input_add"
         android:contentDescription="Thêm thư viện"
-        app:backgroundTint="#1976D2"
-        app:tint="@android:color/white" />
+        app:backgroundTint="#FF5722"
+        app:tint="@android:color/white"
+        app:rippleColor="#33FFFFFF"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

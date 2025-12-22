@@ -265,12 +265,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void switchAccount() {
-        new AlertDialog.Builder(this)
-                .setTitle("Chuyển tài khoản")
-                .setMessage("Bạn có muốn chuyển tài khoản không?")
-                .setPositiveButton("Có", (d, w) -> logout())
-                .setNegativeButton("Hủy", null)
-                .show();
+        Intent intent = new Intent(MainActivity.this, AccountChooserActivity.class);
+        startActivity(intent);
     }
 
     private void logout() {
