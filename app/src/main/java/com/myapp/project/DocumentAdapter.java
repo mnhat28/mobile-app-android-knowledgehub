@@ -2,6 +2,8 @@ package com.myapp.project;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,13 +11,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
+
+import java.io.File;
 import java.util.List;
-import java.util.Locale;
 
 public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.ViewHolder> {
 
@@ -39,8 +41,7 @@ public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.ViewHo
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context)
-                .inflate(R.layout.item_document, parent, false);
+        View view = LayoutInflater.from(context).inflate(R.layout.item_document, parent, false);
         return new ViewHolder(view);
     }
 
@@ -49,74 +50,87 @@ public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.ViewHo
         Document doc = documents.get(position);
 
         holder.tvName.setText(doc.getName());
-        holder.tvDescription.setText(
-                doc.getDescription() != null && !doc.getDescription().isEmpty()
-                        ? doc.getDescription()
-                        : "Không có mô tả"
-        );
+        holder.tvDescription.setText(doc.getDescription() != null ? doc.getDescription() : "Không có mô tả");
 
-        switch (doc.getFileType()) {
-            case "PDF":
-                holder.ivIcon.setImageResource(android.R.drawable.ic_menu_recent_history);
-                break;
-            case "TXT":
-                holder.ivIcon.setImageResource(android.R.drawable.ic_menu_edit);
-                break;
-            case "IMAGE":
-                holder.ivIcon.setImageResource(android.R.drawable.ic_menu_gallery);
-                break;
-            default:
-                holder.ivIcon.setImageResource(android.R.drawable.ic_menu_info_details);
+        if (doc.getTags() != null && !doc.getTags().isEmpty()) {
+            holder.tvTags.setVisibility(View.VISIBLE);
+            holder.tvTags.setText(doc.getTags());
+        } else {
+            holder.tvTags.setVisibility(View.GONE);
         }
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-        holder.tvDate.setText(sdf.format(new Date(doc.getLastModified())));
+        String type = doc.getFileType();
 
-        holder.tvTags.setVisibility(
-                doc.getTags() != null && !doc.getTags().isEmpty() ? View.VISIBLE : View.GONE
-        );
-        holder.tvTags.setText(doc.getTags());
+        // --- XỬ LÝ HIỂN THỊ: ẢNH THẬT hoặc ICON MÀU GALAXY ---
+        if ("IMAGE".equals(type)) {
+            // 1. Nếu là Ảnh: Xóa nền màu, dùng Glide load ảnh thật
+            holder.layoutIcon.setBackground(null);
+            holder.ivFileType.clearColorFilter(); // Xóa lớp phủ màu trắng
 
-        holder.cardView.setOnClickListener(v -> {
+            Glide.with(context)
+                    .load(new File(doc.getFilePath()))
+                    .transform(new CircleCrop())
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .error(android.R.drawable.stat_notify_error)
+                    .into(holder.ivFileType);
+
+        } else {
+            // 2. Nếu là PDF/Text: Dùng nền màu theo Theme
+            Glide.with(context).clear(holder.ivFileType); // Xóa ảnh cũ
+            holder.layoutIcon.setBackgroundResource(R.drawable.bg_circle_icon);
+
+            // Màu mặc định (Xám)
+            int color = Color.parseColor("#757575");
+            int iconRes = android.R.drawable.ic_menu_info_details;
+
+            if ("PDF".equals(type)) {
+                color = Color.parseColor("#7B1FA2"); // Tím (Purple) - Hợp với Gradient cuối
+                iconRes = android.R.drawable.ic_menu_sort_by_size;
+            } else if ("TXT".equals(type)) {
+                color = Color.parseColor("#2196F3"); // Xanh (Blue) - Hợp với Gradient đầu
+                iconRes = android.R.drawable.ic_menu_edit;
+            }
+
+            // Đổi màu nền tròn
+            if (holder.layoutIcon.getBackground() instanceof GradientDrawable) {
+                ((GradientDrawable) holder.layoutIcon.getBackground()).setColor(color);
+            }
+
+            holder.ivFileType.setImageResource(iconRes);
+            holder.ivFileType.setColorFilter(Color.WHITE); // Icon trắng nổi bật
+        }
+
+        holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, DocumentDetailActivity.class);
             intent.putExtra("document", doc);
             context.startActivity(intent);
         });
 
-        holder.cardView.setOnLongClickListener(v -> {
+        holder.btnMore.setOnClickListener(v -> {
             if (longClickListener != null) longClickListener.onDocumentLongClick(doc, position);
-            return true;
         });
     }
 
     @Override
-    public int getItemCount() {
-        return documents.size();
-    }
-
-    public void updateList(List<Document> docs) {
-        this.documents = docs;
-        notifyDataSetChanged();
-    }
-
-    public void removeItem(int position) {
-        documents.remove(position);
-        notifyItemRemoved(position);
-    }
+    public int getItemCount() { return documents.size(); }
+    public void updateList(List<Document> docs) { this.documents = docs; notifyDataSetChanged(); }
+    public void removeItem(int position) { documents.remove(position); notifyItemRemoved(position); }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        CardView cardView;
-        ImageView ivIcon;
-        TextView tvName, tvDescription, tvDate, tvTags;
+        View cardView;
+        TextView tvName, tvDescription, tvTags;
+        ImageView ivFileType, btnMore;
+        View layoutIcon;
 
         ViewHolder(View itemView) {
             super(itemView);
-            cardView = itemView.findViewById(R.id.cardView);
-            ivIcon = itemView.findViewById(R.id.ivIcon);
+            cardView = itemView.findViewById(R.id.cardDocument);
+            layoutIcon = itemView.findViewById(R.id.layoutIcon);
+            ivFileType = itemView.findViewById(R.id.ivFileType);
             tvName = itemView.findViewById(R.id.tvName);
             tvDescription = itemView.findViewById(R.id.tvDescription);
-            tvDate = itemView.findViewById(R.id.tvDate);
             tvTags = itemView.findViewById(R.id.tvTags);
+            btnMore = itemView.findViewById(R.id.btnMore);
         }
     }
 }

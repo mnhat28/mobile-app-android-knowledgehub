@@ -3,12 +3,17 @@ package com.myapp.project;
 import java.io.Serializable;
 
 public class Document implements Serializable {
+
     private long id;
     private String name;
     private String description;
     private String filePath;
     private String fileType; // PDF, TXT, IMAGE
     private String tags;
+
+    // THÊM FIELD NÀY
+    private String extractedText;
+
     private long createdDate;
     private long lastModified;
 
@@ -17,19 +22,23 @@ public class Document implements Serializable {
         this.lastModified = System.currentTimeMillis();
     }
 
+    // Constructor chuẩn 9 tham số để DatabaseHelper gọi
     public Document(long id, String name, String description, String filePath,
-                    String fileType, String tags, long createdDate, long lastModified) {
+                    String fileType, String tags, String extractedText,
+                    long createdDate, long lastModified) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.filePath = filePath;
         this.fileType = fileType;
         this.tags = tags;
+        this.extractedText = extractedText;
         this.createdDate = createdDate;
         this.lastModified = lastModified;
     }
 
-    // Getters and Setters
+    // ===== GETTERS / SETTERS =====
+
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
 
@@ -47,6 +56,9 @@ public class Document implements Serializable {
 
     public String getTags() { return tags; }
     public void setTags(String tags) { this.tags = tags; }
+
+    public String getExtractedText() { return extractedText; }
+    public void setExtractedText(String extractedText) { this.extractedText = extractedText; }
 
     public long getCreatedDate() { return createdDate; }
     public void setCreatedDate(long createdDate) { this.createdDate = createdDate; }

@@ -4,12 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import android.widget.EditText;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -24,6 +25,8 @@ public class LibraryContentActivity extends AppCompatActivity {
     private DocumentAdapter documentAdapter;
     private List<Document> docs;
 
+    private FloatingActionButton fabChatLibrary;
+
     public static void open(Context ctx, Library library) {
         Intent i = new Intent(ctx, LibraryContentActivity.class);
         i.putExtra(EXTRA_LIBRARY, library);
@@ -34,6 +37,7 @@ public class LibraryContentActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_library_content);
+
         library = (Library) getIntent().getSerializableExtra(EXTRA_LIBRARY);
         if (library == null) { finish(); return; }
 
@@ -49,19 +53,62 @@ public class LibraryContentActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerViewLibraryContent);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        loadDocuments();
+        fabChatLibrary = findViewById(R.id.fabChatLibrary);
+        fabChatLibrary.setOnClickListener(v -> chatWithEntireLibrary());
 
-        // Floating button to add existing files to this library
         FloatingActionButton fab = findViewById(R.id.fabAddFileToLibrary);
         fab.setOnClickListener(v -> showAddFileToLibraryDialog());
+
+        loadDocuments();
     }
+
+    // --- ĐÂY LÀ HÀM ĐÃ SỬA ---
+    private void chatWithEntireLibrary() {
+        if (docs == null || docs.isEmpty()) {
+            Toast.makeText(this, "Thư viện này trống, không thể hỏi AI!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        StringBuilder combinedContent = new StringBuilder();
+        combinedContent.append("Đây là nội dung tổng hợp từ thư viện " + library.getName() + ":\n\n");
+
+        int validDocsCount = 0;
+
+        for (Document doc : docs) {
+            String text = doc.getExtractedText();
+            if (text != null && !text.trim().isEmpty()) {
+                combinedContent.append("--- Tài liệu: ").append(doc.getName()).append(" ---\n");
+                combinedContent.append(text).append("\n\n");
+                validDocsCount++;
+            }
+        }
+
+        if (validDocsCount == 0) {
+            Toast.makeText(this, "Các tài liệu trong thư viện này chưa có nội dung (chưa quét OCR hoặc PDF chưa đọc được).", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Document virtualDoc = new Document();
+
+        // --- QUAN TRỌNG: Sửa dòng này ---
+        // Sử dụng số âm của ID thư viện để làm ID duy nhất cho đoạn chat này
+        // Ví dụ: Lib ID = 5 => Chat ID = -5
+        virtualDoc.setId( -1 * library.getId() );
+
+        virtualDoc.setName("Chat: " + library.getName());
+        virtualDoc.setExtractedText(combinedContent.toString());
+
+        Intent intent = new Intent(LibraryContentActivity.this, ChatActivity.class);
+        intent.putExtra("document", virtualDoc);
+        startActivity(intent);
+    }
+    // ------------------------------------
 
     private void loadDocuments() {
         docs = dbHelper.getDocumentsInLibrary(library.getId());
         documentAdapter = new DocumentAdapter(this, docs);
-        // optionally set long click listener to allow remove file from library or edit
+
         documentAdapter.setOnDocumentLongClickListener((document, position) -> {
-            // when long-press a doc inside library, show option to remove from library or edit
             String[] options = {"Gỡ khỏi thư viện", "Chỉnh sửa thông tin", "Xóa file"};
             androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
             builder.setTitle(document.getName())
@@ -70,7 +117,6 @@ public class LibraryContentActivity extends AppCompatActivity {
                             dbHelper.removeDocumentFromLibrary(library.getId(), document.getId());
                             loadDocuments();
                         } else if (which == 1) {
-                            // reuse existing edit dialog in MainActivity logic or implement quick edit
                             androidx.appcompat.app.AlertDialog.Builder editB = new androidx.appcompat.app.AlertDialog.Builder(this);
                             View v = getLayoutInflater().inflate(R.layout.dialog_add_document, null);
                             EditText etName = v.findViewById(R.id.etDocName);
@@ -85,17 +131,13 @@ public class LibraryContentActivity extends AppCompatActivity {
                                         document.setName(etName.getText().toString().trim());
                                         document.setDescription(etDescription.getText().toString().trim());
                                         document.setTags(etTags.getText().toString().trim());
-                                        DatabaseHelper dh = new DatabaseHelper(this);
-                                        dh.updateDocument(document);
+                                        dbHelper.updateDocument(document);
                                         loadDocuments();
                                     })
                                     .setNegativeButton("Hủy", null)
                                     .show();
                         } else if (which == 2) {
-                            // delete file permanently
-                            DatabaseHelper dh = new DatabaseHelper(this);
-                            dh.deleteDocument(document.getId());
-                            // also delete file from disk not handled here (MainActivity did it); keep consistent
+                            dbHelper.deleteDocument(document.getId());
                             loadDocuments();
                         }
                     }).show();
@@ -104,11 +146,10 @@ public class LibraryContentActivity extends AppCompatActivity {
     }
 
     private void showAddFileToLibraryDialog() {
-        // Reuse a simple dialog listing all documents (from full list), allowing selection
         List<Document> allDocs = dbHelper.getAllDocuments();
         if (allDocs == null || allDocs.isEmpty()) {
             androidx.appcompat.app.AlertDialog.Builder b = new androidx.appcompat.app.AlertDialog.Builder(this);
-            b.setMessage("Không có tài liệu nào trong kho để thêm.")
+            b.setMessage("Kho tài liệu trống. Hãy thêm tài liệu ở màn hình chính trước.")
                     .setPositiveButton("OK", null)
                     .show();
             return;

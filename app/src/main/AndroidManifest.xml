@@ -49,6 +49,7 @@
             android:exported="false"
             android:screenOrientation="portrait" />
 
+
         <!-- Document Detail Activity -->
         <activity
             android:name=".DocumentDetailActivity"
@@ -81,6 +82,22 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".LibraryActivity" />
         </activity>
+
+        <activity
+            android:name=".ChatActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.myapp.project.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 

@@ -15,6 +15,29 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // --- BẮT ĐẦU PHẦN BẢO MẬT API KEY ---
+
+        // 1. Đọc file local.properties
+        Properties properties = new Properties()
+        if (project.rootProject.file('local.properties').exists()) {
+            properties.load(project.rootProject.file('local.properties').newDataInputStream())
+        }
+
+        // 2. Lấy key từ file và đưa vào BuildConfig
+        // Nếu không tìm thấy key, nó sẽ để trống "" để tránh lỗi build
+        def geminiKey = properties.getProperty('GEMINI_API_KEY', "")
+
+        // Tạo biến: public static final String GEMINI_API_KEY = "..."
+        buildConfigField "String", "GEMINI_API_KEY", "\"${geminiKey}\""
+
+        // --- KẾT THÚC PHẦN BẢO MẬT ---
+    }
+
+    // --- QUAN TRỌNG: Phải bật cái này thì mới dùng được BuildConfig ---
+    buildFeatures {
+        buildConfig = true
+        viewBinding = true // Tôi bật luôn cái này vì thường code hiện đại đều dùng
     }
 
     buildTypes {
@@ -78,4 +101,10 @@ dependencies {
     // --- Glide (hiển thị ảnh tài liệu) ---
     implementation "com.github.bumptech.glide:glide:4.16.0"
     annotationProcessor "com.github.bumptech.glide:compiler:4.16.0"
+
+    // (Tôi đã xóa bớt 1 dòng okhttp bị trùng ở đây để code gọn hơn)
+
+    implementation 'com.tom-roush:pdfbox-android:2.0.27.0'
+
+    implementation "io.noties.markwon:core:4.6.2"
 }
