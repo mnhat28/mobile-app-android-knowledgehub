@@ -134,4 +134,3 @@ public class DocumentDetailActivity extends AppCompatActivity {
         ivIcon.setImageResource(iconRes);
         ivIcon.setColorFilter(Color.WHITE);
     }
-}
