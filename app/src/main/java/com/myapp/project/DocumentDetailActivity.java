@@ -35,7 +35,10 @@ public class DocumentDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_document_detail);
 
         document = (Document) getIntent().getSerializableExtra("document");
-        if (document == null) { finish(); return; }
+        if (document == null) {
+            finish();
+            return;
+        }
 
         initViews();
         setupData();
@@ -134,3 +137,5 @@ public class DocumentDetailActivity extends AppCompatActivity {
         ivIcon.setImageResource(iconRes);
         ivIcon.setColorFilter(Color.WHITE);
     }
+
+}
